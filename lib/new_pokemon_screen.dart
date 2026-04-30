@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'pokemon_service.dart';
 
 class PokemonForm extends StatefulWidget {
   const PokemonForm({super.key});
@@ -10,18 +11,25 @@ class PokemonForm extends StatefulWidget {
 
 class _PokemonFormState extends State<PokemonForm> {
   final _formKey = GlobalKey<FormState>();
-
-  final _nameController = TextEditingController();
-  final _spriteIdController = TextEditingController();
   final _levelController = TextEditingController();
-
-  final _spriteIdFocusNode = FocusNode();
+  bool _loadingDetails = false;
+  final _queryController = TextEditingController();
   final _levelFocusNode = FocusNode();
-
-  String? _selectedType;
-  String _previewName = '';
+  Map<String, dynamic>? _selected; // null = fase 1, não-null = fase 2
+  late Future<List<String>> _searchFuture;
 
   @override
+  void initState() {
+    super.initState();
+    _searchFuture = fetchPokemonNames();
+  }
+
+  void _buscar() {
+    setState(() {
+      _searchFuture = fetchPokemonByName(_queryController.text.trim());
+    });
+  }
+
   void dispose() {
     _nameController.dispose();
     _spriteIdController.dispose();
@@ -36,7 +44,7 @@ class _PokemonFormState extends State<PokemonForm> {
 
     await FirebaseFirestore.instance.collection('pokemons').add({
       'name': _nameController.text.trim(),
-      'spriteId': int.parse(_spriteIdController.text.trim()),
+      'spriteId': _spriteIdController.text.trim(),
       'level': int.parse(_levelController.text.trim()),
       'types': <String>[_selectedType!],
     });
@@ -49,8 +57,12 @@ class _PokemonFormState extends State<PokemonForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Novo Pokémon')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: _selected == null ? _buildList() : _buildForm(),
+    );
+  }
+}
+
+/* Padding( padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -130,21 +142,26 @@ class _PokemonFormState extends State<PokemonForm> {
                   labelText: 'Tipo',
                   border: OutlineInputBorder(),
                 ),
-                items: ['Fogo', 'Água', 'Planta', 'Elétrico', 'Normal', 'Psíquico', 'Gelo', 'Dragão']
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                    .toList(),
+                items:
+                    [
+                          'Fogo',
+                          'Água',
+                          'Planta',
+                          'Elétrico',
+                          'Normal',
+                          'Psíquico',
+                          'Gelo',
+                          'Dragão',
+                        ]
+                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                        .toList(),
                 onChanged: (value) => setState(() => _selectedType = value),
-                validator: (value) => value == null ? 'Selecione um tipo' : null,
+                validator: (value) =>
+                    value == null ? 'Selecione um tipo' : null,
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _save,
-                child: const Text('Salvar'),
-              ),
+              ElevatedButton(onPressed: _save, child: const Text('Salvar')),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
+      ),  */

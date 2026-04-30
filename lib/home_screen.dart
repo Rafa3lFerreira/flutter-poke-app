@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
               final docId = docs[index].id;
               final pokemon = Pokemon(
                 name: data['name'],
-                spriteId: data['spriteId'],
+                spriteUrl: data['spriteUrl'],
                 typeIds: List<int>.from(data['typeIds'] ?? []),
                 level: data['level'],
                 moves: List<String>.from(data['moves'] ?? []),
