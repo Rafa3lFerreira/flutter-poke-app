@@ -40,14 +40,19 @@ class _HomeScreenState extends State<HomeScreen> {
               final pokemon = Pokemon(
                 name: data['name'],
                 spriteUrl: data['spriteUrl'],
-                typeIds: List<int>.from(data['typeIds'] ?? []),
+                types: List<String>.from(data['types'] ?? []),
                 level: data['level'],
                 moves: List<String>.from(data['moves'] ?? []),
               );
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.transparent,
-                  backgroundImage: NetworkImage(pokemon.spriteUrl),
+                  backgroundImage: pokemon.spriteUrl.isNotEmpty
+                      ? NetworkImage(pokemon.spriteUrl)
+                      : null,
+                  child: pokemon.spriteUrl.isEmpty
+                      ? const Icon(Icons.catching_pokemon)
+                      : null,
                 ),
                 title: Text(pokemon.name),
                 subtitle: Text('Nível: ${pokemon.level}'),

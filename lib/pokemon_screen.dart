@@ -70,14 +70,11 @@ class _PokemonCardState extends State<PokemonCard> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 4),
-                Row(
-                  children: [
-                    for (var tipos in widget.pokemon.typeIds)
-                      Image.network(
-                        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-iii/firered-leafgreen/$tipos.png',
-                        height: 12,
-                      ),
-                  ],
+                Wrap(
+                  spacing: 8,
+                  children: widget.pokemon.types
+                      .map((t) => Chip(label: Text(t)))
+                      .toList(),
                 ),
               ],
             ),
