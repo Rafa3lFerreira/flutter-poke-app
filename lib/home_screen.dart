@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'pokemon.dart';
 import 'pokemon_screen.dart';
 import 'new_pokemon_screen.dart';
+import 'trainer_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +18,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pokédex')),
+      appBar: AppBar(
+        title: const Text('Pokédex'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TrainerProfileScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
