@@ -21,13 +21,37 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Pokédex'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TrainerProfileScreen(),
+          FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('trainer_profile')
+                .doc('main')
+                .get(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    child: Icon(Icons.person),
+                  ),
+                );
+              }
+        
+              final data = snapshot.data!.data() as Map<String, dynamic>?;
+              final avatarIndex = data?['avatarIndex'] ?? 0;
+        
+              return IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainerProfileScreen(),
+                    ),
+                  );
+                },
+                icon: CircleAvatar(
+                  backgroundImage: AssetImage(
+                    'assets/trainers/trainer_$avatarIndex.png',
+                  ),
                 ),
               );
             },
