@@ -19,7 +19,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pokédex'),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Pokédex', style: TextStyle(fontSize: 18)),
+            Text(
+              FirebaseAuth.instance.currentUser?.email,
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
         actions: [
           FutureBuilder<DocumentSnapshot>(
             future: FirebaseFirestore.instance
@@ -30,15 +39,13 @@ class _HomeScreenState extends State<HomeScreen> {
               if (!snapshot.hasData) {
                 return const Padding(
                   padding: EdgeInsets.all(8.0),
-                  child: CircleAvatar(
-                    child: Icon(Icons.person),
-                  ),
+                  child: CircleAvatar(child: Icon(Icons.person)),
                 );
               }
-        
+
               final data = snapshot.data!.data() as Map<String, dynamic>?;
               final avatarIndex = data?['avatarIndex'] ?? 0;
-        
+
               return IconButton(
                 onPressed: () {
                   Navigator.push(
@@ -55,6 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => FirebaseAuth.instance.signOut(),
           ),
         ],
       ),
