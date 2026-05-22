@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'pokemon.dart';
 import 'pokemon_screen.dart';
@@ -19,22 +20,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Pokédex', style: TextStyle(fontSize: 18)),
             Text(
-              FirebaseAuth.instance.currentUser?.email,
-              style: TextStyle(fontSize: 12),
+              FirebaseAuth.instance.currentUser?.email ?? '',
+              style: const TextStyle(fontSize: 12),
             ),
           ],
         ),
         actions: [
-          FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
                 .collection('trainer_profile')
                 .doc('main')
-                .get(),
+                .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Padding(
@@ -44,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               final data = snapshot.data!.data() as Map<String, dynamic>?;
-              final avatarIndex = data?['avatarIndex'] ?? 0;
+              final avatarIndex = (data?['avatarIndex'] as int?) ?? 1;
 
               return IconButton(
                 onPressed: () {
@@ -94,6 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 types: List<String>.from(data['types'] ?? []),
                 level: data['level'],
                 moves: List<String>.from(data['moves'] ?? []),
+                latitude: (data['latitude'] as num?)?.toDouble(),
+                longitude: (data['longitude'] as num?)?.toDouble(),
               );
               return ListTile(
                 leading: CircleAvatar(
@@ -106,7 +109,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       : null,
                 ),
                 title: Text(pokemon.name),
-                subtitle: Text('Nível: ${pokemon.level}'),
+                subtitle: Row(
+                  children: [
+                    Text('Nível: ${pokemon.level}'),
+                    if (pokemon.hasLocation) ...[
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.place,
+                        size: 14,
+                        color: Colors.deepPurple,
+                      ),
+                    ],
+                  ],
+                ),
                 onTap: () async {
                   final result = await Navigator.push<int>(
                     context,

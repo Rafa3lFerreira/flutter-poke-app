@@ -1,7 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
-import 'pokemon_screen.dart';
+import 'home_screen.dart';
 import 'auth_screen.dart';
 
 void main() async {
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          if (snapshot.hasData) return const PokemonScreen();
+          if (snapshot.hasData) return const HomeScreen();
 
           return const AuthScreen();
         },

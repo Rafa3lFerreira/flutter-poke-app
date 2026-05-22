@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'location_service.dart';
 import 'pokemon_service.dart';
 
 class PokemonForm extends StatefulWidget {
@@ -16,6 +17,7 @@ class _PokemonFormState extends State<PokemonForm> {
   late Future<List<String>> _searchFuture;
   Map<String, dynamic>? _selected;
   bool _loadingDetails = false;
+  bool _capturing = false;
 
   @override
   void initState() {
@@ -57,17 +59,31 @@ class _PokemonFormState extends State<PokemonForm> {
     }
   }
 
-  Future<void> _salvar() async {
+  Future<void> _capturar() async {
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _capturing = true);
+    final position = await getLocation();
 
     await FirebaseFirestore.instance.collection('pokemons').add({
       'name': _selected!['name'],
       'spriteUrl': _selected!['spriteUrl'],
       'types': _selected!['types'],
       'level': int.parse(_levelController.text.trim()),
+      if (position != null) 'latitude': position.latitude,
+      if (position != null) 'longitude': position.longitude,
     });
 
     if (!mounted) return;
+    setState(() => _capturing = false);
+
+    final mensagem = position != null
+        ? 'Capturado em ${position.latitude.toStringAsFixed(4)}°, ${position.longitude.toStringAsFixed(4)}°'
+        : 'Capturado sem localização';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensagem)));
+
     Navigator.pop(context);
   }
 
@@ -199,7 +215,43 @@ class _PokemonFormState extends State<PokemonForm> {
               },
             ),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _salvar, child: const Text('Cadastrar')),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.my_location, color: Colors.deepPurple),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Ao capturar, o navegador pode pedir permissão para acessar sua localização.',
+                      style: TextStyle(
+                        color: Colors.deepPurple.shade900,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _capturing ? null : _capturar,
+              icon: _capturing
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.catching_pokemon),
+              label: Text(_capturing ? 'Capturando...' : 'Capturar Pokémon'),
+            ),
           ],
         ),
       ),

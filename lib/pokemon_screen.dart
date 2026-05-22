@@ -28,6 +28,8 @@ class _PokemonScreenState extends State<PokemonScreen> {
           children: [
             PokemonCard(pokemon: widget.pokemon),
             SizedBox(height: 16),
+            LocationCard(pokemon: widget.pokemon),
+            SizedBox(height: 16),
             BattlePanel(pokemon: widget.pokemon),
             SizedBox(height: 16),
             MoveList(pokemon: widget.pokemon),
@@ -77,6 +79,55 @@ class _PokemonCardState extends State<PokemonCard> {
                       .toList(),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class LocationCard extends StatelessWidget {
+  final Pokemon pokemon;
+
+  const LocationCard({super.key, required this.pokemon});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLocation = pokemon.hasLocation;
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(
+              hasLocation ? Icons.place : Icons.location_off,
+              color: hasLocation ? Colors.deepPurple : Colors.grey,
+              size: 32,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Local da captura',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    hasLocation
+                        ? '${pokemon.latitude!.toStringAsFixed(4)}°, ${pokemon.longitude!.toStringAsFixed(4)}°'
+                        : 'Localização não registrada',
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
