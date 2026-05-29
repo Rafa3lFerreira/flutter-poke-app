@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'pokemon.dart';
+import 'battle_provider.dart';
+import 'stat_bar.dart';
 
 class PokemonScreen extends StatefulWidget {
   final Pokemon pokemon;
@@ -14,26 +17,32 @@ class PokemonScreen extends StatefulWidget {
 class _PokemonScreenState extends State<PokemonScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        title: Text(widget.pokemon.name),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+    return ChangeNotifierProvider(
+      create: (_) => BattleProvider(
+        pokemonName: widget.pokemon.name,
+        level: widget.pokemon.level,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            PokemonCard(pokemon: widget.pokemon),
-            SizedBox(height: 16),
-            LocationCard(pokemon: widget.pokemon),
-            SizedBox(height: 16),
-            BattlePanel(pokemon: widget.pokemon),
-            SizedBox(height: 16),
-            MoveList(pokemon: widget.pokemon),
-          ],
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade100,
+        appBar: AppBar(
+          title: Text(widget.pokemon.name),
+          backgroundColor: Colors.deepPurple,
+          foregroundColor: Colors.white,
+        ),
+        body: SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PokemonCard(pokemon: widget.pokemon),
+              SizedBox(height: 16),
+              LocationCard(pokemon: widget.pokemon),
+              SizedBox(height: 16),
+              BattlePanel(docId: widget.docId),
+              SizedBox(height: 16),
+              MoveList(pokemon: widget.pokemon),
+            ],
+          ),
         ),
       ),
     );
@@ -52,6 +61,7 @@ class PokemonCard extends StatefulWidget {
 class _PokemonCardState extends State<PokemonCard> {
   @override
   Widget build(BuildContext context) {
+    final level = context.select((BattleProvider p) => p.level);
     return Card(
       elevation: 2,
       child: Padding(
@@ -70,6 +80,15 @@ class _PokemonCardState extends State<PokemonCard> {
                 Text(
                   widget.pokemon.name,
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Nível $level',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.deepPurple.shade400,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 SizedBox(height: 4),
                 Wrap(
@@ -136,57 +155,14 @@ class LocationCard extends StatelessWidget {
   }
 }
 
-class BattlePanel extends StatefulWidget {
-  final Pokemon pokemon;
+class BattlePanel extends StatelessWidget {
+  final String docId;
 
-  const BattlePanel({super.key, required this.pokemon});
-
-  @override
-  State<BattlePanel> createState() => _BattlePanelState();
-}
-
-class _BattlePanelState extends State<BattlePanel> {
-  int hp = 100;
-  int xp = 0;
-  late int level;
-
-  @override
-  void initState() {
-    super.initState();
-    level = widget.pokemon.level;
-  }
-
-  Color get hpColor {
-    if (hp > 60) return Colors.green;
-    if (hp > 30) return Colors.yellow;
-    return Colors.red;
-  }
-
-  String get statusMessage {
-    if (hp == 0) return '${widget.pokemon.name} desmaiou!';
-    if (hp <= 30) return 'HP crítico!';
-    return '';
-  }
-
-  void _atacar() {
-    setState(() {
-      hp = (hp - 20).clamp(0, 100);
-      xp = xp + 10;
-      if (xp >= 100) {
-        level++;
-        xp = 0;
-      }
-    });
-  }
-
-  void _usarPocao() {
-    setState(() {
-      hp = (hp + 30).clamp(0, 100);
-    });
-  }
+  const BattlePanel({super.key, required this.docId});
 
   @override
   Widget build(BuildContext context) {
+    final battle = context.watch<BattleProvider>();
     return Card(
       elevation: 2,
       child: Padding(
@@ -194,16 +170,26 @@ class _BattlePanelState extends State<BattlePanel> {
         child: Column(
           children: [
             Text(
-              'Nível $level',
+              'Nível ${battle.level}',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
-            _StatBar(label: 'HP', value: hp, maxValue: 100, color: hpColor),
-            _StatBar(label: 'XP', value: xp, maxValue: 100, color: Colors.blue),
-            if (statusMessage.isNotEmpty) ...[
+            StatBar(
+              label: 'HP',
+              value: battle.hp,
+              maxValue: 100,
+              color: battle.hpColor,
+            ),
+            StatBar(
+              label: 'XP',
+              value: battle.xp,
+              maxValue: 100,
+              color: Colors.blue,
+            ),
+            if (battle.statusMessage.isNotEmpty) ...[
               SizedBox(height: 8),
               Text(
-                statusMessage,
+                battle.statusMessage,
                 style: TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -215,7 +201,9 @@ class _BattlePanelState extends State<BattlePanel> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: hp > 0 ? _atacar : null,
+                    onPressed: battle.hp > 0
+                        ? () => context.read<BattleProvider>().attack()
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
@@ -226,7 +214,9 @@ class _BattlePanelState extends State<BattlePanel> {
                 SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: hp < 100 ? _usarPocao : null,
+                    onPressed: battle.hp < 100
+                        ? () => context.read<BattleProvider>().heal()
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
@@ -236,7 +226,10 @@ class _BattlePanelState extends State<BattlePanel> {
                 ),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context, level),
+                    onPressed: () {
+                      final level = context.read<BattleProvider>().level;
+                      Navigator.pop(context, level);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.yellow,
                       foregroundColor: Colors.white,
@@ -281,62 +274,6 @@ class _MoveListState extends State<MoveList> {
               leading: Icon(Icons.nightlight_round, color: Colors.deepPurple),
               title: Text(golpes),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatBar extends StatelessWidget {
-  final String label;
-  final int value;
-  final int maxValue;
-  final Color color;
-
-  const _StatBar({
-    required this.label,
-    required this.value,
-    required this.maxValue,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label   $value / $maxValue',
-            style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
-          ),
-          SizedBox(height: 4),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final ratio = (value / maxValue).clamp(0.0, 1.0);
-              return Stack(
-                children: [
-                  Container(
-                    height: 12,
-                    width: constraints.maxWidth,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  Container(
-                    height: 12,
-                    width: constraints.maxWidth * ratio,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
         ],
       ),
     );
